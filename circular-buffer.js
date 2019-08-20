@@ -1,37 +1,23 @@
 class CircularBuffer {
     constructor(size) {
-      this.buffer = new Array(size);
-      this.id = 0;
+      this.buffer = [];
+      this.size = size;
     }
   
     read() {
-        let isEmpty = true;
-        let value;
-        console.log(this.buffer);
-        let min = 100000; let index;
-        for (let i = 0; i < this.buffer.length; i++) {
-            if (this.buffer[i] && this.buffer[i].id != null && this.buffer[i].id < min) { min = this.buffer[i].id; index = i; isEmpty = false;}
-        }
-        if (!isEmpty) {
-            value = this.buffer[index].value;
-            this.buffer[index] = { value: null, id: null };
-            return value;
-        } else {
+        if (Object.values(this.buffer).length == 0) {
             throw new BufferEmptyError("Buffer is Empty");
-        }
+        } else {
+            return this.buffer.pop();
+        }        
     }
 
     write(value) {
-        let isEmptyCellFound = false; let index;
-        for (let i = 0; i < this.buffer.length; i++) {
-            if (this.buffer[i] == null || ( this.buffer[i] != null && this.buffer[i].value == null) ) {
-                isEmptyCellFound = true; index = i; break;
-            }
-        }
-        if (isEmptyCellFound) { this.id++; this.buffer[index] = { value, id: this.id }; }
-        else { throw new BufferFullError("Buffer is Full"); }
-        console.log(this.buffer);
-        
+        if (this.buffer.length == this.size) {
+            throw new BufferFullError("Buffer is Full");
+        } else if (value != null) {
+            this.buffer.unshift(value);
+        }        
     }
 
     forceWrite(value) {
@@ -39,23 +25,15 @@ class CircularBuffer {
             this.write(value);
         } catch(e) {
             if (e instanceof BufferFullError) {
-                let min = 100000; let index;
-                for (let i = 0; i < this.buffer.length; i++) {
-                    if (this.buffer[i] && this.buffer[i].id < min) { min = this.buffer[i].id; index = i; }
-                }
-                this.id++; this.buffer[index] = { value, id: this.id };
+                this.buffer.splice(this.size - 1, 1);    
+                this.buffer.unshift(value);
             }
         }
     }
 
-    clear() {
-        for (let i = 0; i < this.buffer.length; i++) {
-            this.buffer[i] = {value: null, id: null}
-        }
-    }
+    clear() { this.buffer = []; }
 }
   
-
 class BufferFullError extends Error {}
 
 class BufferEmptyError extends Error {}
@@ -64,8 +42,4 @@ const circularBuffer = (size) => {
     return new CircularBuffer(size);
 }
 
-export {
-    circularBuffer as default,
-    BufferFullError,
-    BufferEmptyError,
-};
+export { circularBuffer as default, BufferFullError, BufferEmptyError };
